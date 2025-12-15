@@ -64,12 +64,12 @@ Configuration details placeholder:
 
 ## 🏠 Habitat
 
-**asterisk_watch** lives on server `dash.uc.simplybits.net` at the configured port.
+**asterisk_watch** lives on server `dash.uc` at the configured port.
 The application runs as a system service, continuously monitoring Asterisk instances and serving the web dashboard over HTTPS.
 
 ### Access Points
 
-- **Web Dashboard:** `https://dash.uc.simplybits.net:<configured_port>`
+- **Web Dashboard:** `https://dash-uc-URL:<configured_port>`
 - **ACME Challenges:** Port 89 
 - **AMI Connection:** Connects to configured Asterisk server(s) on port 5038
 
