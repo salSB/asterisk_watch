@@ -145,10 +145,11 @@ func FindOrgInfoPtr(orgID string) *ORGINFO {
 	orgMapRWMutex.RLock()
 	defer orgMapRWMutex.RUnlock()
 	if pOrg, ok = orgMap[orgID]; !ok {
-		logger.Debugf("[FindOrgInfoPtr] OrgID (%s) not found\n", orgID)
+		logger.Warnf("[FindOrgInfoPtr] OrgID (%s) not found\n", orgID)
 		return nil
 	}
-	logger.Debugf("[FindOrgInfoPtr] Found existing OrgInfo for OrgID (%s) -> [%#v]\n", orgID, pOrg)
+	//logger.Debugf("[FindOrgInfoPtr] Found existing OrgInfo for OrgID (%s) -> [%#v]\n", orgID, pOrg)
+	printOrgInfo(pOrg)
 	pOrg.Lock()
 	return pOrg
 }
