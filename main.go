@@ -2,14 +2,17 @@ package main
 
 import (
 	"context"
-	"errors"
 	"database/sql"
 	"encoding/json"
+	"error
 	"flag"
 	"fmt"
 	"github.com/Simply-Bits/astmon/gami"
 	"github.com/Simply-Bits/astmon/gami/event"
 	"github.com/Simply-Bits/go.uuid"
+"
+	"github.com/boj/redistore"
+	_ "g
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -28,7 +31,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
 	"github.com/boj/redistore"
 )
@@ -703,7 +705,7 @@ func printEv(ev *gami.AMIEvent) {
 func BuildSipDescriptionMap() {
 
 	rows, err := DB.Query(`
-		SELECT concat('PJSIP/', sippeers.name) as 'auth_userID', sippeers.fullname as 'display_name'
+		SELECT concat('SIP/', sippeers.name) as 'auth_userID', sippeers.fullname as 'display_name'
 		FROM sippeers
 		WHERE sippeers.fullname IS NOT NULL`)
 	if err != nil {
