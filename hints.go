@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Simply-Bits/astmon/gami/event"
 	"strings"
 	"time"
@@ -31,6 +32,7 @@ func ExtensionStatus(m event.ExtensionStatus) {
 		logger.Warnf("ExtensionStatus event received but processing is disabled\n")
 		return
 	}
+	printExtensionStatus(m)
 	tNow = time.Now()
 	parts := strings.SplitN(m.Context, "-", 2)
 	if len(parts) == 2 {
@@ -77,17 +79,42 @@ func ExtensionStatus(m event.ExtensionStatus) {
 		}
 		pOrg.Extensions[m.Exten] = pExtInfo
 	}
+	printExtensionInfo(pExtInfo)
 	sendEventHintChange(orgID, pExtInfo)
+}
 
+func printExtensionStatus(m event.ExtensionStatus) {
+	logger.Debugf("------- ExtensionStatus -------")
+	logger.Debugf("Exten: '%s' Context='%s'", m.Exten, m.Context)
+	logger.Debugf("Hint:  '%s' Status=%d", m.Hint, m.Status)
+	logger.Debugf("--------------------------------")
+}
+
+func printExtensionInfo(extensioninfo *EXTENSIONINFO) {
+	logger.Debugf("------- ExtensionInfo -------")
+	logger.Debugf("Exten: '%s' Status=%d", extensioninfo.Exten, extensioninfo.Status)
+	logger.Debugf("LastStatusChange: '%s'", extensioninfo.LastStatusChange.Format(time.RFC3339))
+	logger.Debugf("App: '%s' Type=%d", extensioninfo.App, extensioninfo.Type)
+	logger.Debugf("Label: '%s'", extensioninfo.Label)
+	logger.Debugf("ConnectedLineNum: '%s'", extensioninfo.ConnectedLineNum)
+	logger.Debugf("ConnectedLineName: '%s'", extensioninfo.ConnectedLineName)
+	logger.Debugf("------------------------------")
 }
 
 func GetHintType(application string) (t int, label string) {
+	logger.Debugf(" GetHintType called with application='%s'\n", application)
+	if strings.HasPrefix(application, "PJSIP/") {
+		logger.Debugf(" GetHintType: application='%s' starts with PJSIP/\n", application)
+		application = fmt.Sprintf("%s", application[2:])
+	}
 	parts := strings.SplitN(application, "&", 2)
 	if len(parts) == 0 {
 		t = EXTENSIONINFO_TYPE_UNKNOWN
 		label = ""
 		return
 	}
+	logger.Debugf(" GetHintType processing part='%#v'  [0] = %s\n", parts, parts[0])
+	logger.Debugf("DeviceDescMap: (%s)\n", DeviceDescMap[parts[0]])
 	t = EXTENSIONINFO_TYPE_CUSTOM
 	label = "Custom"
 	application = strings.ToUpper(parts[0])
@@ -130,8 +157,10 @@ func NewState(m event.Newstate) {
 		pExt  *EXTENSIONINFO
 	)
 	if processExtensionStatus.Load().(bool) == false {
+		logger.Warnf("NewState event received but processing is disabled\n")
 		return
 	}
+	printNewState(m)
 	if m.ChannelState != 6 { // 6 = Up
 		return
 	}
@@ -141,11 +170,15 @@ func NewState(m event.Newstate) {
 		logger.Warnf("NewState: Unable to get OrgID from %s", m.Channel)
 		return
 	}
+	logger.Debugf("NewState: orgID=%s exten=%s\n", orgID, exten)
 	if pOrg = FindOrgInfoPtr(orgID); pOrg != nil {
+		logger.Debugf("NewState: Found OrgID %s", orgID)
 		pExt, found = pOrg.Extensions[exten]
+		logger.Debugf("NewState: Looking for extension %s in OrgID %s found=%t\n", exten, orgID, found)
 		if found {
 			pExt.ConnectedLineNum = m.ConnectedLineNum
 			pExt.ConnectedLineName = m.ConnectedLineName
+			logger.Debugf(" NewState: Extension %s/%s is now Up, ConnectedLineNum=%s ConnectedLineName=%s\n", orgID, exten, pExt.ConnectedLineNum, pExt.ConnectedLineName)
 			sendEventHintChange(orgID, pExt)
 		} else {
 			logger.Warnf("NewState: Unable to find extension for %s", exten)
@@ -154,4 +187,17 @@ func NewState(m event.Newstate) {
 	} else {
 		logger.Warnf("NewState: Cannot find OrgID %s", orgID)
 	}
+}
+
+func printNewState(m event.Newstate) {
+	logger.Debugf(" NewState: Channel='%s' ChannelState=%d ChannelStateDesc='%s' CallerIDNum='%s' CallerIDName='%s' ConnectedLineNum='%s' ConnectedLineName='%s' Uniqueid='%s' - Privilege=%#v\n",
+		m.Channel,
+		m.ChannelState,
+		m.ChannelStateDesc,
+		m.CallerIDNum,
+		m.CallerIDName,
+		m.ConnectedLineNum,
+		m.ConnectedLineName,
+		m.UniqueID,
+		m.Privilege)
 }

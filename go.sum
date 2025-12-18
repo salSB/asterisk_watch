@@ -4,6 +4,12 @@ github.com/Simply-Bits/astmon v0.0.0-20220418172745-75cb3d895419 h1:MwPwfyTFZ1Pz
 github.com/Simply-Bits/astmon v0.0.0-20220418172745-75cb3d895419/go.mod h1:Zn/5GzPPa0+SSM32TOxsW5riMPrzg/Sycg7UoBojFcg=
 github.com/Simply-Bits/astmon v0.0.0-20251212201627-3bdd2db36503 h1:sAcTY6UQ46wUySitCt4jnGcRppu+n5VYVfy2DtwfVYw=
 github.com/Simply-Bits/astmon v0.0.0-20251212201627-3bdd2db36503/go.mod h1:Zn/5GzPPa0+SSM32TOxsW5riMPrzg/Sycg7UoBojFcg=
+github.com/Simply-Bits/astmon v0.0.0-20251218001609-91792ba8a117 h1:Y2pXPwrPUh3wdJ4Yk4u8e/eO9TqfJRX+FGLG1aT2FGU=
+github.com/Simply-Bits/astmon v0.0.0-20251218001609-91792ba8a117/go.mod h1:Zn/5GzPPa0+SSM32TOxsW5riMPrzg/Sycg7UoBojFcg=
+github.com/Simply-Bits/astmon v0.0.0-20251218001910-f768ce149faa h1:c77iNfRclhhZ5mUy6ASckoC+hkI4m5zD2ZKIa7rtvl0=
+github.com/Simply-Bits/astmon v0.0.0-20251218001910-f768ce149faa/go.mod h1:Zn/5GzPPa0+SSM32TOxsW5riMPrzg/Sycg7UoBojFcg=
+github.com/Simply-Bits/astmon v0.0.0-20251218003128-0ad6d7464bc2 h1:oClYAFf/V9AytRPLkBdsnl6ShO46/e0D5TnnirOEG6A=
+github.com/Simply-Bits/astmon v0.0.0-20251218003128-0ad6d7464bc2/go.mod h1:Zn/5GzPPa0+SSM32TOxsW5riMPrzg/Sycg7UoBojFcg=
 github.com/Simply-Bits/go.uuid v1.3.0 h1:2oUGh7V2n7e+fGqur9t/9NhIrIjpbsCKd6ibBZ9+HKM=
 github.com/Simply-Bits/go.uuid v1.3.0/go.mod h1:39WExJO9npOhgpQR9q723imvCU4Y5frA7gKHBaCMJpA=
 github.com/boj/redistore v1.4.1 h1:lP9ZZWqKMq2RIqexlZX1w1ODSnegL+puxGIujkU5tIw=

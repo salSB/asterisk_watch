@@ -4,15 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"error
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/Simply-Bits/astmon/gami"
 	"github.com/Simply-Bits/astmon/gami/event"
 	"github.com/Simply-Bits/go.uuid"
-"
 	"github.com/boj/redistore"
-	_ "g
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -31,8 +29,8 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
-	"github.com/boj/redistore"
 )
 
 // Session constants
@@ -307,9 +305,9 @@ func main() {
 	// Device Description Map from SIP Peers view
 	DeviceDescMap = make(map[string]string, 1024)
 	BuildSipDescriptionMap()
-	if Config.Debug {
-		PrintDeviceDescMap()
-	}
+	//if Config.Debug {
+	//	PrintDeviceDescMap()
+	//}
 	logger.Debugf("Finished Building SIP Description Map\n")
 
 	// Legacy AMI support has been REMOVED - see older versions of astmon for reference
@@ -320,7 +318,7 @@ func main() {
 	logger.Infof("Connected and logged into AMI at %s\n", Config.AMI.ConnectString)
 
 	// Events On
-	_, err = pAMI.Action("Events", gami.Params{"EventMask": "on"})
+	_, err = pAMI.Action("Events", gami.Params{"EventMask": "call,system,all"})
 	if err != nil {
 		logger.Fatalf("Error enabling AMI events: %s", err)
 	}
@@ -328,10 +326,10 @@ func main() {
 
 	// Get initial Extension Status
 	// After ExtensionStateList action
+	processExtensionStatus.Store(true)
 	if resp, err = pAMI.Action("ExtensionStateList", nil); err != nil {
 		logger.Errorf("Error getting ExtensionStateList from AMI: %s", err)
 	} else {
-		processExtensionStatus.Store(true)
 		logger.Debugf("ExtensionStateList Response=%+v\n", resp)
 	}
 
@@ -380,7 +378,11 @@ func main() {
 
 	// HTTPS handling
 	commonHandlers := alice.New(loggingHandler, authHandler)
-
+	logger.Debugf(" _____ _____ _____ ____  _   _ \n")
+	logger.Debugf("|  _  | ____|  _  |  _ \\| | | |\n")
+	logger.Debugf("| |_| |  _| | |_| | | | | |_| |\n")
+	logger.Debugf("|    _| |___|  _  | |_| |___  |\n")
+	logger.Debugf("|_|\\_\\|_____|_| |_|____/    |_|\n")
 	// The order of the Handle() calls is important here, be careful rearranging these
 	r := mux.NewRouter()
 	// SSL Cert Renewal Handler
@@ -506,11 +508,19 @@ func processInUseChannels() {
 		case <-ctxExiting.Done():
 			return
 		case Channel = <-chanNewChannels:
+			if strings.HasPrefix(Channel, "PJSIP/trunksip1-") {
+				logger.Debugf("Replacing PJSIP/ with SIP/ for channel %s\n", Channel)
+				Channel = strings.Replace(Channel, "PJSIP/", "SIP/", 1)
+			}
 			if len(Channel) > 14 && Channel[0:14] == "SIP/trunksip1-" {
 				mapInprocessChannels[Channel] = true
 				saveInfluxNumTrunkChannels(len(mapInprocessChannels), "PSTN")
 			}
 		case Channel = <-chanHangups:
+			if strings.HasPrefix(Channel, "PJSIP/trunksip1-") {
+				logger.Debugf("Replacing PJSIP/ with SIP/ for channel %s\n", Channel)
+				Channel = strings.Replace(Channel, "PJSIP/", "SIP/", 1)
+			}
 			if len(Channel) > 14 && Channel[0:14] == "SIP/trunksip1-" {
 				delete(mapInprocessChannels, Channel)
 				saveInfluxNumTrunkChannels(len(mapInprocessChannels), "PSTN")
@@ -535,11 +545,12 @@ func periodicQueueRefresh() {
 
 func doQueueRefresh() {
 	processQueueEntries.Store(false)
+	logger.Debugf("Refreshing Queue Entries via QueueStatus Action\n")
 	if resp, err := pAMI.Action("QueueStatus", nil); err != nil {
 		logger.Fatalf("Error getting QueueStatus from AMI: %s", err)
 	} else {
 		processQueueEntries.Store(true)
-		logger.Debugf("QueueStatus Response=%+v\n", resp)
+		logger.Debugf("QueueStatus [%s]", resp.Status)
 		sendReload()
 	}
 }
@@ -562,7 +573,10 @@ func handleAMI(pAMI *gami.AMIClient) {
 			logger.Errorf("AMI Error: %s", err)
 
 		case pEV := <-pAMI.Events:
-			logger.Debugf("-- [Inbound AMI Event] --")
+			logger.Debugf("-- [Inbound AMI Event] -- [%s]", pEV.ID)
+			//if pEV.ID == "QueueCallerLeave" {
+			//	logger.Debugf("QueueCallerLeave Event Params: %+v\n", pEV.Params)
+			//}
 			//printEv(pEV)
 			//if GC.LegacyAMI {
 			//	/* *pEV (AMIEvent) looks like {
@@ -606,6 +620,7 @@ func handleAMI(pAMI *gami.AMIClient) {
 			AMIEventsMutex.RLock()
 			if actionID, hasActionID := pEV.Params["Actionid"]; hasActionID {
 				if c, exists := AMIEvents[actionID]; exists {
+					logger.Debugf("Found ActionID Event for ActionID:%s\n", actionID)
 					AMIEventsMutex.RUnlock()
 					c <- pEV
 					continue // Skip normal event processing for ActionID events
@@ -616,6 +631,8 @@ func handleAMI(pAMI *gami.AMIClient) {
 			// Then do normal event processing for non-ActionID events
 			if i := event.New(pEV); i != nil && reflect.TypeOf(i) != nil {
 				handleEvIface(i)
+			} else if j := event.New(pEV); j != nil {
+				logger.Warnf("UNHANDLED EventType:%s\n", reflect.TypeOf(i))
 			}
 			//////////////////////////////////////////////////////////////////
 			//}
@@ -641,6 +658,11 @@ func handleEvIface(i interface{}) {
 		handleQueueMember(i.(event.QueueMember))
 	case "event.QueueEntry":
 		handleQueueEntry(i.(event.QueueEntry))
+	case "event.QueueCallerJoin":
+		handleQueueCallerJoin(i.(event.QueueCallerJoin))
+	case "event.QueueCallerLeave":
+		logger.Debugf("Queue Leave -> %#v", i.(event.QueueCallerLeave))
+		handleQueueCallerLeave(i.(event.QueueCallerLeave))
 	case "event.QueueJoin":
 		handleQueueJoin(i.(event.QueueJoin))
 	case "event.QueueLeave":
@@ -722,7 +744,7 @@ func BuildSipDescriptionMap() {
 			break
 		}
 		DeviceDescMap[authUserID] = dispName
-		logger.Debugf("Added to DeviceDescMap: authUserID:%s dispName:%s\n", authUserID, dispName)
+		//logger.Debugf("Added to DeviceDescMap: authUserID:%s dispName:%s\n", authUserID, dispName)
 	}
 }
 
@@ -1073,11 +1095,11 @@ func GetOrgInfoPtr(orgID string) *ORGINFO {
 		orgMapRWMutex.Lock()
 		orgMap[orgID] = pOrg
 		logger.Debugf("Created new ORGINFO for OrgID %s\n", orgID)
-		printOrgInfo(pOrg)
+		//printOrgInfo(pOrg)
 		orgMapRWMutex.Unlock()
 	} else {
 		logger.Debugf("Found existing ORGINFO for OrgID %s\n", orgID)
-		printOrgInfo(pOrg)
+		//printOrgInfo(pOrg)
 		orgMapRWMutex.RUnlock()
 	}
 	pOrg.Lock()
@@ -1235,12 +1257,12 @@ func AMIDBGet(family string, key string) (string, error) {
 		for {
 			select {
 			case pEV := <-AMIEvents[ActionID]:
-				logger.Debugf("[Processing myAMIEvent] %#v\n", pEV)
+				logger.Debugf("[Processing AMIEvent] %#v\n", pEV)
 				if pEV.ID == "DBGetResponse" {
-					logger.Debugf("[Processing DBGetResponse]\n")
+					logger.Debugf("[Processing AMIDBGetResponse]\n")
 					value = pEV.Params["Val"]
 				} else if pEV.ID == "DBGetComplete" {
-					logger.Debugf("[Processing DBGetComplete]\n")
+					logger.Debugf("[Processing AMIDBGetComplete]\n")
 					return value, nil
 				}
 			case <-time.After(5 * time.Second):

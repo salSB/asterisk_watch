@@ -250,32 +250,32 @@ func (h *hub) run() {
 }
 
 /*
-func (h *hub) broadcastHintChange(hcn HintChangeNotify1) {
-	jsondata, err := json.Marshal(hcn)
-	if err != nil {
-		logger.Errorf( "broadcastHintChange Marshal error: %s", err)
-		return
-	}
-	for c := range h.clients {
-		c.Lock()
-		if _, ok := c.OrgIDWatched[hcn.OrgID]; ok {
-			logger.Debugf("Sending HINTCHANGE to client\n")
-			c.Unlock()
-			// This OrgID is being watched by this client
-			select {
-			case c.send <- jsondata:
-				break
+	func (h *hub) broadcastHintChange(hcn HintChangeNotify1) {
+		jsondata, err := json.Marshal(hcn)
+		if err != nil {
+			logger.Errorf( "broadcastHintChange Marshal error: %s", err)
+			return
+		}
+		for c := range h.clients {
+			c.Lock()
+			if _, ok := c.OrgIDWatched[hcn.OrgID]; ok {
+				logger.Debugf("Sending HINTCHANGE to client\n")
+				c.Unlock()
+				// This OrgID is being watched by this client
+				select {
+				case c.send <- jsondata:
+					break
 
-			// We can't reach the client
-			default:
-				close(c.send)
-				delete(h.clients, c)
+				// We can't reach the client
+				default:
+					close(c.send)
+					delete(h.clients, c)
+				}
+			} else {
+				c.Unlock()
 			}
-		} else {
-			c.Unlock()
 		}
 	}
-}
 */
 func (h *hub) broadcastOrgChange(jsondata []byte) {
 	var (
@@ -284,11 +284,13 @@ func (h *hub) broadcastOrgChange(jsondata []byte) {
 			OrgID string
 		}
 	)
+
 	err := json.Unmarshal(jsondata, &notifyHdr)
 	if err != nil {
 		logger.Errorf("broadcastOrgChange Unmarshal error: %s", err)
 		return
 	}
+	logger.Debugf("ORGCHANGE: %+v", notifyHdr)
 	for c := range h.clients {
 		c.Lock()
 		if _, ok := c.OrgIDWatched[notifyHdr.OrgID]; ok {

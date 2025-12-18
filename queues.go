@@ -97,7 +97,8 @@ func handleQueueParams(evt event.QueueParams) {
 	   queue entries via QueueEntry events so we always create a new list for the entries.
 	*/
 
-	log.Println("QP=", evt)
+	// log.Println("QP=", evt)
+	printQueueParamsEvent(evt)
 	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
 	if ok == false {
 		logger.Debugf("[handleQueueParams] Unable to decode queue name %s\n", evt.Queue)
@@ -134,6 +135,23 @@ func handleQueueParams(evt event.QueueParams) {
 	}
 }
 
+func printQueueParamsEvent(evt event.QueueParams) {
+	logger.Debugf("------- QueueParams Event -------\n")
+	logger.Debugf("Queue: %s\n", evt.Queue)
+	logger.Debugf("Max: %d\n", evt.Max)
+	logger.Debugf("Strategy: %s\n", evt.Strategy)
+	logger.Debugf("CALLS: %d\n", evt.Calls)
+	logger.Debugf("HoldTime: %d\n", evt.HoldTime)
+	logger.Debugf("TalkTime: %d\n", evt.TalkTime)
+	logger.Debugf("Completed: %d\n", evt.Completed)
+	logger.Debugf("Abandoned: %d\n", evt.Abandoned)
+	logger.Debugf("ServiceLevel: %d\n", evt.ServiceLevel)
+	logger.Debugf("ServicelevelPerf: %f\n", evt.ServicelevelPerf)
+	logger.Debugf("Weight: %d\n", evt.Weight)
+	logger.Debugf("WhenStatsCleared: %s\n", evt.WhenStatsCleared)
+	logger.Debugf("------- End QueueParams Event -------\n")
+}
+
 // Search for OrgInfo in our Org map, returning nil if none found.
 // Upon return of non-nil value, the found ORGINFO is locked
 // and the caller must call pOrg.Unlock()
@@ -149,7 +167,7 @@ func FindOrgInfoPtr(orgID string) *ORGINFO {
 		return nil
 	}
 	//logger.Debugf("[FindOrgInfoPtr] Found existing OrgInfo for OrgID (%s) -> [%#v]\n", orgID, pOrg)
-	printOrgInfo(pOrg)
+	//printOrgInfo(pOrg)
 	pOrg.Lock()
 	return pOrg
 }
@@ -173,12 +191,17 @@ func handleQueueMember(evt event.QueueMember) {
 	if ok == false {
 		return
 	}
+	logger.Debugf("\t Handling Queue Member for OrgID (%s), Queue (%s)", orgID, queuename)
 	if pOrg := FindOrgInfoPtr(orgID); pOrg == nil {
+		logger.Debugf("\t Unable to FindOrg InfoPtr for OrgID (%s)", orgID)
 		return
 	} else {
+		logger.Debugf("\t Found OrgInfo for OrgID (%s), processing member", orgID)
+		printQueueMemberEvent(evt)
 		defer pOrg.Unlock()
 		pQI, found := pOrg.Queues[queuename]
 		if found == true {
+			logger.Debugf("\t Found QueueInfo for Queue (%s), processing member", queuename)
 			pQM, found := pQI.Members[evt.Location]
 			if !found {
 				pQM = new(QUEUEMEMBER)
@@ -216,8 +239,26 @@ func handleQueueMember(evt event.QueueMember) {
 			}
 			pQM.Status = evt.Status
 			pQM.Paused = evt.Paused
+		} else {
+			logger.Debugf("\t Unable to find QueueInfo for Queue (%s)", queuename)
 		}
 	}
+}
+
+func printQueueMemberEvent(evt event.QueueMember) {
+	logger.Debugf("------- QueueMember Event -------\n")
+	logger.Debugf("Queue: %s\n", evt.Queue)
+	logger.Debugf("Name: %s\n", evt.Name)
+	logger.Debugf("Location: %s\n", evt.Location)
+	logger.Debugf("Membership: %s\n", evt.Membership)
+	logger.Debugf("DynamicAge: %s\n", evt.DynamicAge)
+	logger.Debugf("Penalty: %d\n", evt.Penalty)
+	logger.Debugf("CallsTaken: %d\n", evt.CallsTaken)
+	logger.Debugf("LastCall: %d\n", evt.LastCall)
+	logger.Debugf("WhenAdded: %d\n", evt.WhenAdded)
+	logger.Debugf("Status: %d\n", evt.Status)
+	logger.Debugf("Paused: %d\n", evt.Paused)
+	logger.Debugf("------- End QueueMember Event -------\n")
 }
 
 func handleQueueEntry(evt event.QueueEntry) {
@@ -274,10 +315,11 @@ func handleQueueJoin(evt event.QueueJoin) {
 	   Custgroup: ls
 	*/
 	if processQueueEntries.Load().(bool) == false {
+		logger.Debugf("[handleQueueJoin] Skipping processing of QueueJoin event as processing is disabled\n")
 		return
 	}
 	now := time.Now()
-	log.Println("QJ=", evt)
+	logger.Debugf("QJ=%#v", evt)
 	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
 	if ok == false {
 		return
@@ -307,10 +349,92 @@ func handleQueueJoin(evt event.QueueJoin) {
 			pQE.WhenEntered = now
 			pQI.Calls = pQI.Calls + 1
 			sendQueueCallersChange(orgID, queuename, pQI)
-			log.Printf("After Join, Queue Entries: %s\n", queuename)
+			logger.Debugf("After Join, Queue Entries: %s\n", queuename)
 			for _, v := range pQI.Entries {
-				log.Printf("\t%d\t%s\t%s\n", v.Position, v.CallerIDName, v.WhenEntered)
+				logger.Debugf("\t%d\t%s\t%s\n", v.Position, v.CallerIDName, v.WhenEntered)
 			}
+		}
+	}
+}
+
+func handleQueueCallerJoin(evt event.QueueCallerJoin) {
+	/* This is an async event when a call goes into a queue in asterisk 22	*/
+	if processQueueEntries.Load().(bool) == false {
+		logger.Debugf("[handleQueueCallerJoin] Skipping processing of QueueJoin event as processing is disabled\n")
+		return
+	}
+	now := time.Now()
+	logger.Debugf("QJ=%#v", evt)
+	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
+	if ok == false {
+		return
+	}
+	if pOrg := FindOrgInfoPtr(orgID); pOrg == nil {
+		return
+	} else {
+		defer pOrg.Unlock()
+		pQI, found := pOrg.Queues[queuename]
+		if found == true {
+			// Adjust all the positions of entries with a position the same or higher than the one we just removed
+			for _, v := range pQI.Entries {
+				if v.Position >= evt.Position {
+					v.Position = v.Position + 1
+				}
+			}
+			pQE := new(QUEUEENTRY)
+			pQI.Entries[evt.Uniqueid] = pQE
+			pQE.Position = evt.Position
+			pQE.Channel = evt.Channel
+			pQE.Uniqueid = evt.Uniqueid
+			pQE.CallerIDNum = evt.CallerIDNum
+			pQE.CallerIDName = evt.CallerIDName
+			pQE.ConnectedLineNum = evt.ConnectedLineNum
+			pQE.ConnectedLineName = evt.ConnectedLineName
+			pQE.CountWhenEntered = evt.Count
+			pQE.WhenEntered = now
+			pQI.Calls = pQI.Calls + 1
+			sendQueueCallersChange(orgID, queuename, pQI)
+			logger.Debugf("After Join, Queue Entries: %s\n", queuename)
+			for _, v := range pQI.Entries {
+				logger.Debugf("\t%d\t%s\t%s\n", v.Position, v.CallerIDName, v.WhenEntered)
+			}
+		}
+	}
+}
+
+func handleQueueCallerLeave(evt event.QueueCallerLeave) {
+	/* This is an async event when a call leaves a queue in asterisk 22	*/
+	if processQueueEntries.Load().(bool) == false {
+		logger.Debugf("[handleQueueCallerLeave] Skipping processing of QueueCallerLeave event as processing is disabled\n")
+		return
+	}
+	logger.Debugf("QL= %#v", evt)
+	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
+	if ok == false {
+		return
+	}
+	if pOrg := FindOrgInfoPtr(orgID); pOrg == nil {
+		return
+	} else {
+		defer pOrg.Unlock()
+		pQI, found := pOrg.Queues[queuename]
+		if found == true {
+			pQE, found2 := pQI.Entries[evt.Uniqueid]
+			if found2 == true {
+				delete(pQI.Entries, evt.Uniqueid)
+				pQI.Calls = pQI.Calls - 1
+				// Adjust all the positions of entries with a position higher than the one we just removed
+				for _, v := range pQI.Entries {
+					if v.Position > pQE.Position {
+						v.Position = v.Position - 1
+					}
+				}
+				logger.Debugf("After Leave, Queue Entries: %s\n", queuename)
+				for _, v := range pQI.Entries {
+					logger.Debugf("\t%d\t%s\t%s\n", v.Position, v.CallerIDName, v.WhenEntered)
+				}
+			}
+			sendQueueCallersChange(orgID, queuename, pQI)
 		}
 	}
 }
@@ -327,9 +451,10 @@ func handleQueueLeave(evt event.QueueLeave) {
 	   Custgroup: furrier51
 	*/
 	if processQueueEntries.Load().(bool) == false {
+		logger.Debugf("[handleQueueJoin] Skipping processing of QueueJoin event as processing is disabled\n")
 		return
 	}
-	log.Println("QL=", evt)
+	logger.Debugf("QL= %#v", evt)
 	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
 	if ok == false {
 		return
@@ -350,9 +475,9 @@ func handleQueueLeave(evt event.QueueLeave) {
 						v.Position = v.Position - 1
 					}
 				}
-				log.Printf("After Leave, Queue Entries: %s\n", queuename)
+				logger.Debugf("After Leave, Queue Entries: %s\n", queuename)
 				for _, v := range pQI.Entries {
-					log.Printf("\t%d\t%s\t%s\n", v.Position, v.CallerIDName, v.WhenEntered)
+					logger.Debugf("\t%d\t%s\t%s\n", v.Position, v.CallerIDName, v.WhenEntered)
 				}
 			}
 			sendQueueCallersChange(orgID, queuename, pQI)

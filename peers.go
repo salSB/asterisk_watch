@@ -7,6 +7,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -41,6 +42,12 @@ func authIDtoOrgID(authID string) (orgID string, exten string, valid bool) {
 	//*******************************************************************************
 
 	var m []string
+	logger.Debugf("Decoding AuthID %s\n", authID)
+	if strings.HasPrefix(authID, "PJSIP/") {
+		logger.Debugf("AuthID %s is PJSIP, not SIP, so cannot decode\n", authID)
+		authID = strings.Replace(authID, "PJSIP/", "SIP/", 1)
+		logger.Debugf("Changed AuthID to %s for decoding\n", authID)
+	}
 	m = baseSIPAuthIDRegexp.FindStringSubmatch(authID)
 	if len(m) < 2 || len(m[1]) == 0 {
 		//log.Printf("Unable to decode AuthID %s\n", authID)
@@ -52,13 +59,16 @@ func authIDtoOrgID(authID string) (orgID string, exten string, valid bool) {
 	return
 }
 
-/* Event looks like:
-type PeerStatus struct {
-	Privilege   []string                   -> [system all]
-	ChannelType string `AMI:"Channeltype"` -> SIP
-	Peer        string `AMI:"Peer"`        -> SIP/7554.2ls
-	PeerStatus  string `AMI:"Peerstatus"`  -> Registered
-}
+/*
+	Event looks like:
+
+	type PeerStatus struct {
+		Privilege   []string                   -> [system all]
+		ChannelType string `AMI:"Channeltype"` -> SIP
+		Peer        string `AMI:"Peer"`        -> SIP/7554.2ls
+		PeerStatus  string `AMI:"Peerstatus"`  -> Registered
+	}
+
 Event: PeerStatus
 Privilege: system,all
 ChannelType: SIP
