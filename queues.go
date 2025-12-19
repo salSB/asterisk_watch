@@ -186,7 +186,7 @@ func handleQueueMember(evt event.QueueMember) {
 	   Status: 1
 	   Paused: 0
 	*/
-	log.Println("QM=", evt)
+	printQueueMemberEvent(evt)
 	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
 	if ok == false {
 		return
@@ -197,7 +197,6 @@ func handleQueueMember(evt event.QueueMember) {
 		return
 	} else {
 		logger.Debugf("\t Found OrgInfo for OrgID (%s), processing member", orgID)
-		printQueueMemberEvent(evt)
 		defer pOrg.Unlock()
 		pQI, found := pOrg.Queues[queuename]
 		if found == true {
@@ -364,7 +363,8 @@ func handleQueueCallerJoin(evt event.QueueCallerJoin) {
 		return
 	}
 	now := time.Now()
-	logger.Debugf("QJ=%#v", evt)
+	//logger.Debugf("QJ=%#v", evt)
+	printQueueCallerJoinEvent(evt)
 	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
 	if ok == false {
 		return
@@ -402,13 +402,23 @@ func handleQueueCallerJoin(evt event.QueueCallerJoin) {
 	}
 }
 
+func printQueueCallerJoinEvent(evt event.QueueCallerJoin) {
+	logger.Debugf("------- QueueCallerJoin Event -------\n")
+	logger.Debugf("Queue: %s, Channel: %s\n", evt.Queue, evt.Channel)
+	logger.Debugf("CallerIDNum: %s, CallerIDName: %s\n", evt.CallerIDNum, evt.CallerIDName)
+	logger.Debugf("ConnectedLineNum: %s, ConnectedLineName: %s\n", evt.ConnectedLineNum, evt.ConnectedLineName)
+	logger.Debugf("Position: %d, Count: %d, Uniqueid: %s\n", evt.Position, evt.Count, evt.Uniqueid)
+	logger.Debugf("------- End QueueCallerJoin Event -------\n")
+}
+
 func handleQueueCallerLeave(evt event.QueueCallerLeave) {
 	/* This is an async event when a call leaves a queue in asterisk 22	*/
 	if processQueueEntries.Load().(bool) == false {
 		logger.Debugf("[handleQueueCallerLeave] Skipping processing of QueueCallerLeave event as processing is disabled\n")
 		return
 	}
-	logger.Debugf("QL= %#v", evt)
+	//logger.Debugf("QL= %#v", evt)
+	printQueueCallerLeaveEvent(evt)
 	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
 	if ok == false {
 		return
@@ -437,6 +447,15 @@ func handleQueueCallerLeave(evt event.QueueCallerLeave) {
 			sendQueueCallersChange(orgID, queuename, pQI)
 		}
 	}
+}
+
+func printQueueCallerLeaveEvent(evt event.QueueCallerLeave) {
+	logger.Debugf("------- QueueCallerLeave Event -------\n")
+	logger.Debugf("Queue: %s, Channel: %s\n", evt.Queue, evt.Channel)
+	logger.Debugf("CallerIDNum: %s, CallerIDName: %s\n", evt.CallerIDNum, evt.CallerIDName)
+	logger.Debugf("ConnectedLineNum: %s, ConnectedLineName: %s\n", evt.ConnectedLineNum, evt.ConnectedLineName)
+	logger.Debugf("Position: %d, Count: %d, Uniqueid: %s\n", evt.Position, evt.Count, evt.Uniqueid)
+	logger.Debugf("------- End QueueCallerLeave Event -------\n")
 }
 
 func handleQueueLeave(evt event.QueueLeave) {
@@ -494,6 +513,7 @@ func handleQueueMemberStatus(evt event.QueueMemberStatus) {
 	if ok == false {
 		return
 	}
+	logger.Debugf("Handling Queue Member Status for OrgID (%s), Queue (%s), event(%#v)", orgID, queuename, evt)
 	if pOrg := FindOrgInfoPtr(orgID); pOrg == nil {
 		return
 	} else {
@@ -658,6 +678,40 @@ func handleQueueCallerAbandon(evt event.QueueCallerAbandon) {
 			sendQueueChange(orgID, queuename, pQI)
 		}
 	}
+}
+
+// Pause (instead of Paused) For asterisk 22+
+func handleQueueMemberPause(evt event.QueueMemberPause) {
+	if processQueueEntries.Load().(bool) == false {
+		return
+	}
+	printQueueMemberPauseEvent(evt)
+	orgID, queuename, ok := queueNameToOrgID(evt.Queue)
+	if ok == false {
+		return
+	}
+	if pOrg := FindOrgInfoPtr(orgID); pOrg == nil {
+		return
+	} else {
+		defer pOrg.Unlock()
+		pQI, found := pOrg.Queues[queuename]
+		if found == true {
+			if pQM, found := pQI.Members[evt.Interface]; found {
+				pQM.Paused = evt.Paused
+				sendQMemberChange(orgID, queuename, "AGENTCHANGE", pQM)
+			}
+		}
+	}
+}
+
+func printQueueMemberPauseEvent(evt event.QueueMemberPause) {
+	logger.Debugf("------- QueueMemberPause Event -------\n")
+	logger.Debugf("Queue: %s\n", evt.Queue)
+	logger.Debugf("Interface: %s\n", evt.Interface)
+	logger.Debugf("Paused: %d\n", evt.Paused)
+	logger.Debugf("MemberName: %s\n", evt.MemberName)
+	logger.Debugf("Reason: %s\n", evt.Reason)
+	logger.Debugf("------- End QueueMemberPause Event -------\n")
 }
 
 func handleQueueMemberPaused(evt event.QueueMemberPaused) {

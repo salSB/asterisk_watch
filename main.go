@@ -330,7 +330,14 @@ func main() {
 	if resp, err = pAMI.Action("ExtensionStateList", nil); err != nil {
 		logger.Errorf("Error getting ExtensionStateList from AMI: %s", err)
 	} else {
-		logger.Debugf("ExtensionStateList Response=%+v\n", resp)
+		logger.Debugf("ExtensionStateList [%s]", resp.Status)
+	}
+
+	// Get initial parked calls
+	if resp, err = pAMI.Action("ParkedCalls", nil); err != nil {
+		logger.Errorf("Error getting ParkedCalls from AMI: %s", err)
+	} else {
+		logger.Debugf("ParkedCalls [%s]", resp.Status)
 	}
 
 	// Detect Asterisk Version
@@ -562,7 +569,7 @@ func handleAMI(pAMI *gami.AMIClient) {
 			logger.Errorf("AMI Network Error: %s", err)
 			<-time.After(time.Second)
 			if err2 := pAMI.Reconnect(); err2 == nil {
-				if _, err3 := pAMI.Action("Events", gami.Params{"EventMask": "on"}); err3 != nil {
+				if _, err3 := pAMI.Action("Events", gami.Params{"EventMask": "call,system,all"}); err3 != nil {
 					logger.Errorf("Error re-enabling AMI events after reconnect: %s", err3)
 				}
 			} else {
@@ -574,9 +581,16 @@ func handleAMI(pAMI *gami.AMIClient) {
 
 		case pEV := <-pAMI.Events:
 			logger.Debugf("-- [Inbound AMI Event] -- [%s]", pEV.ID)
-			//if pEV.ID == "QueueCallerLeave" {
-			//	logger.Debugf("QueueCallerLeave Event Params: %+v\n", pEV.Params)
-			//}
+			if pEV.ID == "QueueMemberPause" {
+				logger.Debugf("QueueMemberPause Event Params: %+v\n", pEV.Params)
+			} else if pEV.ID == "ParkedCall" {
+				logger.Debugf("ParkedCall Event Params: %+v\n", pEV.Params)
+			} else if pEV.ID == "UnParkedCall" {
+				logger.Debugf("UnParkedCall Event Params: %+v\n", pEV.Params)
+			} else if pEV.ID == "ParkedCallGiveUp" {
+				logger.Debugf("UnParkedCall Event Params: %+v\n", pEV.Params)
+			}
+			//
 			//printEv(pEV)
 			//if GC.LegacyAMI {
 			//	/* *pEV (AMIEvent) looks like {
@@ -646,8 +660,13 @@ func handleEvIface(i interface{}) {
 	// Handled in parkedcalls.go
 	case "event.ParkedCall":
 		AddParkedCall(i.(event.ParkedCall))
-	case "event.UnParkedCall", "event.ParkedCallGiveUp", "event.ParkedCallTimeOut":
-		RemoveParkedCall(i.(event.ParkedCall))
+	case "event.UnParkedCall":
+		RemoveParkedCall(i.(event.UnParkedCall).ParkingLot, i.(event.UnParkedCall).ParkeeChannel)
+	case "event.ParkedCallGiveup":
+		logger.Debugf("ParkedCallGiveup -> %#v", i.(event.ParkedCallGiveup))
+		RemoveParkedCall(i.(event.ParkedCallGiveup).ParkingLot, i.(event.ParkedCallGiveup).ParkeeChannel)
+	case "event.ParkedCallTimeout":
+		RemoveParkedCall(i.(event.ParkedCallTimeout).ParkingLot, i.(event.ParkedCallTimeout).ParkeeChannel)
 	// Handled in hints.go
 	case "event.ExtensionStatus":
 		ExtensionStatus(i.(event.ExtensionStatus))
@@ -679,6 +698,8 @@ func handleEvIface(i interface{}) {
 		handleQueueCallerAbandon(i.(event.QueueCallerAbandon))
 	case "event.QueueMemberPaused":
 		handleQueueMemberPaused(i.(event.QueueMemberPaused))
+	case "event.QueueMemberPause":
+		handleQueueMemberPause(i.(event.QueueMemberPause))
 	case "event.QueueMemberPenalty":
 		handleQueueMemberPenalty(i.(event.QueueMemberPenalty))
 	case "event.PeerStatus":
@@ -836,6 +857,7 @@ func panelGet(w http.ResponseWriter, r *http.Request) {
 			Exts        []EXTPAGEINFO
 			Queues      []QUEUEPAGEINFO
 			Vars        []VARPAGEINFO
+			ParkedCalls map[string]event.ParkedCall
 		}
 		ID          string
 		err         error
@@ -845,6 +867,7 @@ func panelGet(w http.ResponseWriter, r *http.Request) {
 		tNow        time.Time
 		templatePtr *template.Template
 	)
+
 	session, _ := SessionStore.Get(r, SESSION_NAME)
 	if err = json.Unmarshal(session.Values["CurUser"].([]byte), &CurUser); err != nil {
 		logger.Errorf("Error retrieving session user data: %s\n", err)
@@ -869,7 +892,9 @@ func panelGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "I/O Error", 404)
 		return
 	}
-
+	pOrg = GetOrgInfoPtr(data.AstOrgID)
+	data.ParkedCalls = pOrg.ParkingLots
+	pOrg.Unlock()
 	logger.Debugf("--------------------------------\n")
 	logger.Debugf("PanelID %s, PBXID %s, AstOrgID %s\n", data.PanelID.String(), data.PBXID, data.AstOrgID)
 	logger.Debugf("Layout: %+v\n", data.Layout)
@@ -1115,8 +1140,8 @@ func printOrgInfo(org *ORGINFO) {
 	}
 	logger.Debugf("ParkingLots:\n")
 	for lotname, pcall := range org.ParkingLots {
-		logger.Debugf("\tLotName: %s, Channel: %s, CallerIDNum: %s, CallerIDName: %s, From: %s\n",
-			lotname, pcall.Channel, pcall.CallerIDNum, pcall.CallerIDName, pcall.From)
+		logger.Debugf("\tLotName: %s, Channel: %s, CallerIDNum: %s, CallerIDName: %s",
+			lotname, pcall.ParkeeChannel, pcall.ParkeeCallerIDNum, pcall.ParkeeCallerIDName)
 	}
 	logger.Debugf("Queues:\n")
 	for qname, pQI := range org.Queues {

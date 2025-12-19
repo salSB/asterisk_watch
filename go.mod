@@ -3,7 +3,7 @@ module asterisk_watch
 go 1.24
 
 require (
-	github.com/Simply-Bits/astmon v0.0.0-20251218003128-0ad6d7464bc2
+	github.com/Simply-Bits/astmon v0.0.0-20251219174019-1414280f9011
 	github.com/Simply-Bits/go.uuid v1.3.0
 	github.com/boj/redistore v1.4.1
 	github.com/go-sql-driver/mysql v1.9.3
