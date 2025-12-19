@@ -34,7 +34,7 @@ func templateFmtTime(t time.Time, format string) string {
 
 func templateFmtAge(t time.Time) string {
 	var d = time.Now().Sub(t)
-	log.Println(d)
+	logger.Debugf("d = %v", d)
 	if d.Hours() > 24.0 {
 		x := int64(d.Seconds())
 		days := x / 86400

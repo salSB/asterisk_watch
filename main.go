@@ -589,6 +589,8 @@ func handleAMI(pAMI *gami.AMIClient) {
 				logger.Debugf("UnParkedCall Event Params: %+v\n", pEV.Params)
 			} else if pEV.ID == "ParkedCallGiveUp" {
 				logger.Debugf("UnParkedCall Event Params: %+v\n", pEV.Params)
+			} else if pEV.ID == "QueueMemberStatus" {
+				logger.Debugf("QueueMemberStatus Event Params: %+v\n", pEV.Params)
 			}
 			//
 			//printEv(pEV)

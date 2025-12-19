@@ -520,13 +520,15 @@ func handleQueueMemberStatus(evt event.QueueMemberStatus) {
 		defer pOrg.Unlock()
 		pQI, found := pOrg.Queues[queuename]
 		if found == true {
-			if pQM, found := pQI.Members[evt.Location]; found {
+			if pQM, found2 := pQI.Members[evt.Interface]; found2 { // in ast22+, Location will be empty, so we use Name here (it is the same value)
 				pQM.Penalty = evt.Penalty
 				pQM.CallsTaken = evt.CallsTaken
 				pQM.LastCall = time.Unix(int64(evt.LastCall), 0)
 				pQM.Status = evt.Status
 				pQM.Paused = evt.Paused
 				sendQMemberChange(orgID, queuename, "AGENTCHANGE", pQM)
+			} else {
+				logger.Debugf("Unable to find Queue Member (%s) in Queue (%s) for OrgID (%s) to update status\n", evt.Name, queuename, orgID)
 			}
 		}
 	}

@@ -22,6 +22,8 @@ github.com/Simply-Bits/astmon v0.0.0-20251219164513-5350e734ae88 h1:yTBxfyeLvyFt
 github.com/Simply-Bits/astmon v0.0.0-20251219164513-5350e734ae88/go.mod h1:Zn/5GzPPa0+SSM32TOxsW5riMPrzg/Sycg7UoBojFcg=
 github.com/Simply-Bits/astmon v0.0.0-20251219174019-1414280f9011 h1:itJ6mO6fk501ZlWyOAm/VrturqV4x+m71I15l1LIYDg=
 github.com/Simply-Bits/astmon v0.0.0-20251219174019-1414280f9011/go.mod h1:Zn/5GzPPa0+SSM32TOxsW5riMPrzg/Sycg7UoBojFcg=
+github.com/Simply-Bits/astmon v0.0.0-20251219214518-abd98c52accf h1:tdnEheF7NNyfpQldZDRk9413QH3xKiSykCmxXz4buDI=
+github.com/Simply-Bits/astmon v0.0.0-20251219214518-abd98c52accf/go.mod h1:Zn/5GzPPa0+SSM32TOxsW5riMPrzg/Sycg7UoBojFcg=
 github.com/Simply-Bits/go.uuid v1.3.0 h1:2oUGh7V2n7e+fGqur9t/9NhIrIjpbsCKd6ibBZ9+HKM=
 github.com/Simply-Bits/go.uuid v1.3.0/go.mod h1:39WExJO9npOhgpQR9q723imvCU4Y5frA7gKHBaCMJpA=
 github.com/boj/redistore v1.4.1 h1:lP9ZZWqKMq2RIqexlZX1w1ODSnegL+puxGIujkU5tIw=
