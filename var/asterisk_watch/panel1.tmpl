@@ -1,0 +1,392 @@
+{{define "pageCSS"}}
+<style>
+html {
+  overflow-y: scroll;
+}
+.exten {
+    font-size: 140%;
+    margin: 0 3px 0 3px;
+    text-align: center;
+}
+.statusText {
+    font-size: 100%;
+    margin: 0 3px 0 3px;
+    text-align: center;
+}
+.statusTextCID {
+    font-size: 100%;
+    margin: 0 3px 0 3px;
+    text-align: center;
+}
+.smallText {
+    font-size: 60%;
+}
+.statusTimer {
+    font-size: 100%;
+    margin: 0 3px 0 3px;
+    text-align: center;
+}
+.status-0 { /* idle */
+    background: #3cd832;
+    font-weight: 400;
+}
+.status-1 {   /* busy */
+    background: #f78484;
+}
+.status-2 {   /* inuse */
+    background: blue;
+    color: white;
+}
+.status-4 { /* unavailable */
+    background: #CCC;
+}
+.status-8 {  /* ringing */
+    background: yellow;
+}
+.status-9 { /* inuse&ringing */
+    background: yellow;
+}
+.status-16 {  /* onhold */
+    background: #e2fb12;
+}
+.status-17 { /* inuse&hold */
+    background: blue;
+    color: white;
+}
+.hintLabel {
+    overflow: hidden;
+    white-space: nowrap;
+    margin: 0 3px 0 3px;
+    text-align: center;
+}
+.grid-hint {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.parkinglot {
+    background-color: #131556;
+    font-size: 120%;
+    text-align: center;
+    color: white;
+}
+
+.grid-parking{
+    width:100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-start;
+    align-items: stretch;
+}
+
+.grid-item-parking {
+    flex-basis: 480px;
+    flex-grow: 0;
+    flex-shrink: 1;
+    border: 1px solid black;
+    margin-bottom: 2px;
+    margin-right: 2px;
+}
+
+.grid-item-hint {
+    flex-basis: 19%;
+    flex-grow: 1;
+    flex-shrink: 0;
+    font-size: 100%;
+    border: 1px solid black;
+    margin-bottom: 2px;
+    margin-right: 2px;
+}
+.grid-queue {
+    display: flex;
+    flex-direction: column;
+}
+.grid-item-queue {
+    border: 1px solid black;
+    margin-bottom: 1px;
+}
+.queuename {
+    background-color: #131556;
+    font-size: 120%;
+    text-align: center;
+    color: white;
+}
+.queuestatlabel {
+    text-align: left;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 1px;
+}
+.queuestatvalue {
+    float:right;
+    font-weight: bold;
+    text-align:right;
+}
+.noagents {
+    font-size: 120%;
+    padding-bottom: 0.3em;
+}
+.callcount {
+    font-size:110%;
+}
+.callsTaken {
+    float:right;
+    margin-right: 0.2em;
+}
+.callsTaken:hover:before
+{
+    position: absolute;
+    right: 3em;
+    color:white;
+    box-shadow: 6px 6px 10px #888;
+    background-color: #131556;
+    font-size: 80%;
+    font-style: italic;
+    content: " Calls taken\2192";
+}
+.agentName {
+    font-size: 90%;
+}
+.agentIcon {
+}
+.agentUnavail {
+    background-color: gray;
+}
+.agentBusy {
+    background-color: blue;
+}
+.agentIdle {
+    background-color: green;
+}
+.agentRing {
+    background-color: yellow;
+}
+.agentPaused {
+    background-color: red;
+}
+.agentPenalty:hover:after
+{
+    position: absolute;
+    color:white;
+    box-shadow: 6px 6px 10px #888;
+    background-color: #131556;
+    font-size: 80%;
+    font-style: italic;
+    content: "\2190Penalty";
+}
+.callerPosition {
+    background: rgba(0,0,0,0.82);
+    margin-left: 1px;
+    margin-right: 2em;
+}
+.callerID {
+    padding-right: 2em;
+}
+.callerWhenEntered {
+
+}
+</style>
+{{end}}
+{{define "extraNav"}}
+    {{if gt (len .Vars) 0}}
+        <li><a id="varsMenu" href="#">PBX Controls</a></li>
+    {{end}}
+    {{if eq .PanelAccess 2}}
+    <li><a href="/edit/{{.PanelID}}">Edit Layout</a></li>
+    {{end}}
+{{end}}
+{{template "header" .}}
+<div class="container-fluid">
+    <div class="row isoffline">
+        <div class="col-md-12">
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Offline</h3>
+                </div>
+                <div class="panel-body">
+                    Communications with server lost, will retry <span id="retryCountdown">5</span> seconds
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="grid-vars" class="row" style="display:none;">
+    {{range .Vars}}
+        <div class="col-sm-4 col-md-3 col-lg-3">
+            <label>{{.Label}}</label>
+        {{if eq .Type "Toggle"}}
+            {{$name := .Name}}
+            {{$values := .Values}}
+            {{range $index, $element := .Options}}
+            <div class="radio">
+                <label>
+                    <input type="radio" name="VAR_{{$name}}" value="{{index $values $index}}"> {{$element}}
+                </label>
+            </div>
+            {{end}}
+        {{else if eq .Type "List"}}
+            {{$name := .Name}}
+            {{$values := .Values}}
+            {{range $index, $element := .Options}}
+            <div class="radio">
+                <label>
+                    <input type="radio" name="VAR_{{$name}}" value="{{index $values $index}}"> {{$element}}
+                </label>
+            </div>
+            {{end}}
+        {{end}}
+            <p var="VAR_{{.Name}}" style="display:none;" class="text-success">Changed</p>
+        </div>
+    {{end}}
+    </div>
+    <div class="row">
+        <div class="col-xs-6">
+            <div class="grid-queue">
+                {{range .Queues}}
+                <div class="grid-item-queue" data-qn="{{.Name}}">
+                    <div class="row">
+                        <div class="col-xs-12"><div class="queuename">{{.Name}}</div></div>
+                    </div>
+                    <div class="row">
+                    {{if .ShowAgents}}
+                        <div class="col-xs-6">
+                            <div class="queuestatlabel">Calls Waiting:
+                                <span class="queuestatvalue callcount" data-qn="{{.Name}}" data-id="calls">{{.QI.Calls}}</span>
+                            </div>
+                            <div class="queuestatlabel">As of
+                                <span class="queuestatvalue" style="float:none; font-weight:normal;" data-qn="{{.Name}}" data-id="whenstatscleared">{{fmttime .QI.WhenStatsCleared "01/02 03:04pm"}}</span>
+                            </div>
+                            <div class="queuestatlabel">Answered:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="completed">{{.QI.Completed}}</span>
+                            </div>
+                            <div class="queuestatlabel">Abandoned:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="abandoned">{{.QI.Abandoned}}</span>
+                            </div>
+                            <div class="queuestatlabel">Avg Talk Time:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="avgtalk">{{.QI.TalkTime}}</span>
+                            </div>
+                            <div class="queuestatlabel">Avg Hold Time:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="avghold">{{.QI.HoldTime}}</span>
+                            </div>
+                            {{if ne .QI.ServiceLevel 0}}
+                                <div class="queuestatlabel">Within {{.QI.ServiceLevel}} sec:
+                                    <span class="queuestatvalue" data-qn="{{.Name}}" data-id="slp">{{.QI.ServicelevelPerf}}%</span>
+                                </div>
+                            {{end}}
+                        </div>
+                        <div class="col-xs-6 agentList" data-qn="{{.Name}}">
+                            {{range $loc, $val := .QI.Members}}
+                            <div data-id="{{$val.Location}}" class="agentEntry">
+                                <span class="agentIcon agentIdle label">?</span>&nbsp;
+                                <span class="agentName">{{$val.Name}}</span>&nbsp;
+                                <span class="agentPenalty">[{{$val.Penalty}}]</span>
+                                {{if eq $val.Membership "dynamic"}}<span class="agentAge">{{fmtage $val.WhenAdded}}</span>&nbsp;{{end}}
+                                <span class="callsTaken">({{$val.CallsTaken}})</span>
+                            </div>
+                            {{end}}
+                        </div>
+                    {{else}}
+                        <div class="col-xs-6">
+                            <div class="queuestatlabel noagents">Calls Waiting:
+                                <span class="queuestatvalue callcount" data-qn="{{.Name}}" data-id="calls">{{.QI.Calls}}</span>
+                            </div>
+                            <div class="queuestatlabel noagents">Avg Talk Time:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="avgtalk">{{.QI.TalkTime}}</span>
+                            </div>
+                            <div class="queuestatlabel noagents">Avg Hold Time:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="avghold">{{.QI.HoldTime}}</span>
+                            </div>
+                            {{if ne .QI.ServiceLevel 0}}
+                                <div class="queuestatlabel noagents">Within {{.QI.ServiceLevel}} sec:
+                                    <span class="queuestatvalue" data-qn="{{.Name}}" data-id="slp">{{.QI.ServicelevelPerf}}%</span>
+                                </div>
+                            {{end}}
+                        </div>
+                        <div class="col-xs-6">
+                            <div class="queuestatlabel noagents">Stats as of:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="whenstatscleared">{{fmttime .QI.WhenStatsCleared "01/02 03:04pm"}}</span>
+                            </div>
+                            <div class="queuestatlabel noagents">Answered:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="completed">{{.QI.Completed}}</span>
+                            </div>
+                            <div class="queuestatlabel noagents">Abandoned:
+                                <span class="queuestatvalue" data-qn="{{.Name}}" data-id="abandoned">{{.QI.Abandoned}}</span>
+                            </div>
+                        </div>
+                    {{end}}
+                    </div>
+                    {{if eq .ShowCalls 1}}
+                    <div class="row">
+                        <div class="col-xs-12 callerList" data-qn="{{.Name}}">
+                            {{range $idx, $pQE := .CallerPositionMap}}
+                            <div data-id="{{$pQE.Uniqueid}}" class="callerEntry">
+                                <span class="callerPosition label">{{$pQE.Position}}</span>
+                                <span class="callerID">{{$pQE.CallerIDName}}@{{$pQE.CallerIDNum}}</span>
+                                <span class="callerWhenEntered" data-secs="{{$pQE.SecsInQueue}}"></span>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+            {{if gt (len .ParkedCalls) 0}}
+            <div class="grid-parking">
+                <div class="grid-item-parking" data-park="parked_calls">
+                    <div class="row">
+                        <div class="col-xs-12"><div class="parkinglot">Parked Calls</div></div>
+                    </div>
+                    <div class="row col-xs-12" style="margin:0 auto">
+                        {{range .ParkedCalls}}
+                        <div class="col">
+                            <span>Lot {{.ParkingSpace}} - Ext {{.ParkeeExten}} 🚗 {{.ParkeeCallerIDName}} ({{.ParkeeCallerIDNum}}) &nbsp;&nbsp;&nbsp;&nbsp;⏲ <span data-id="{{.ParkeeChannel}}" data-time="{{.ParkedAt}}" data-duration="{{.ParkingDuration}}" data-timeout="{{.ParkingTimeout}}">{{.ParkingDuration}}</span></span>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+<script>
+function addAgent(a) {
+    var newNode = $('<div class="agentEntry" data-id="'+a.location+'">'+
+                    '<span class="agentIcon agentIdle label">?</span>&nbsp;'+
+                    '<span class="agentName">'+a.name+'</span>&nbsp;'+
+                    '<span class="agentPenalty">['+a.penalty+']</span>'+
+                    '<span class="agentAge">'+a.whenadded.toString('MM/dd hh:mmtt')+'</span>'+
+                    '<span class="callsTaken">('+a.callstaken+')</span>'+
+                    '</div>');
+    $('.agentList[data-qn="'+a.queuename+'"]').append(newNode);
+}
+
+function emptyCallers(queuename) {
+    var d = $('.callerList[data-qn="'+queuename+'"]');
+    if (d) d.html('');
+}
+
+function addCaller(queuename, c) {
+    var d = $('.callerList[data-qn="'+queuename+'"]');
+    if (d) {
+        var x = '<div class="callerEntry" data-id="'+c.uniqueid+'">'+
+                '<span class="callerPosition label">'+c.position+'</span>'+
+                '<span class="callerID">';
+        if (c.calleridname.length > 0)
+            x += c.calleridname + '@';
+        x += c.calleridnum+'</span>';
+        var now = new XDate();
+        var secs = c.whenentered.diffSeconds(now);
+        x += '<span class="callerWhenEntered" data-secs="'+secs+'">'+formatSecs(secs)+'</span>';
+        x += '</div>';
+        d.append($(x));
+    }
+}
+</script>
+{{template "appcode" .}}
+{{template "footer"}}

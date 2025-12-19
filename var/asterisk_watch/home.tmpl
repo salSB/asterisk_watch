@@ -1,0 +1,612 @@
+{{if eq .Layout.LayoutType 4 5}}
+    {{define "pageCSS"}}
+    <style>
+    .statusText {
+        font-size: 100%;
+    }
+    .status-0 { /* idle */
+        background: #a5ea8e;
+    }
+    .status-1 {   /* busy */
+        background: #f78484;
+    }
+    .status-2 {   /* inuse */
+        background: #f78484;
+    }
+    .status-8 {  /* ringing */
+        background: #e2fb12;
+    }
+    .status-16 {  /* onhold */
+        background: #e2fb12;
+    }
+    .status-4 { /* unavailable */
+        background: #CCC;
+    }
+    .exten {
+        font-size: 140%;
+    }
+    html {
+      overflow-y: scroll;
+    }
+    .grid-hint {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    .grid-item-hint {
+        flex-basis: 19%;
+        flex-grow: 1;
+        flex-shrink: 0;
+        font-size: 100%;
+        border: 1px solid black;
+        margin-top: 1px;
+        margin-right: 1px;
+    }
+    .grid-queue {
+        width:100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-content: stretch;
+        align-items: stretch;
+    }
+    .grid-item-queue {
+        flex-basis: 49%;
+        flex-grow: 0;
+        flex-shrink: 0;
+        border: 1px solid black;
+        margin-top: 1px;
+        margin-right: 1px;
+    }
+    .hintLabel {
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .queuename {
+        background-color: #131556;
+        font-size: 120%;
+        text-align: center;
+        color: white;
+    }
+    .queuestatlabel {
+        text-align: center;
+    }
+    .queuestatvalue {
+        text-align: center;
+    }
+    .agentUnavail {
+        color: gray;
+    }
+    .agentBusy {
+        color: blue;
+    }
+    .agentIdle {
+        color: green;
+    }
+    .agentRing {
+        color: yellow;
+    }
+    .agentPaused {
+        color: red;
+    }
+    </style>
+    {{end}}
+{{else}}
+    {{define "pageCSS"}}
+    <style>
+    .statusText {
+        font-size: 100%;
+    }
+    .status-0 { /* idle */
+        background: #a5ea8e;
+    }
+    .status-1 {   /* busy */
+        background: #f78484;
+    }
+    .status-2 {   /* inuse */
+        background: #f78484;
+    }
+    .status-8 {  /* ringing */
+        background: #e2fb12;
+    }
+    .status-16 {  /* onhold */
+        background: #e2fb12;
+    }
+    .status-4 { /* unavailable */
+        background: #CCC;
+    }
+    .exten {
+        font-size: 140%;
+    }
+    html {
+      overflow-y: scroll;
+    }
+    .grid-hint {
+        width:100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+    .grid-item-hint {
+        flex-grow: 0;
+        flex-shrink: 0;
+        flex-basis: 100px;
+        font-size: 100%;
+        border: 1px solid black;
+        margin-top: 1px;
+        margin-right: 1px;
+    }
+    .grid-queue {
+        width:100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: flex-start;
+        align-items: flex-start;
+    }
+    .grid-item-queue {
+        width: 33%;
+        flex-grow: 0;
+        flex-shrink: 0;
+        border: 1px solid black;
+        margin-top: 1px;
+        margin-right: 1px;
+    }
+    .hintLabel {
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .queuename {
+        background-color: #131556;
+        font-size: 120%;
+        text-align: center;
+        color: white;
+    }
+    .queuestatlabel {
+        text-align: center;
+    }
+    .queuestatvalue {
+        text-align: center;
+    }
+    .agentUnavail {
+        color: gray;
+    }
+    .agentBusy {
+        color: blue;
+    }
+    .agentIdle {
+        color: green;
+    }
+    .agentRing {
+        color: yellow;
+    }
+    .agentPaused {
+        color: red;
+    }
+    </style>
+    {{end}}
+{{end}}
+{{define "pageCSS"}}
+<style>
+.statusText {
+    font-size: 100%;
+}
+.status-0 { /* idle */
+    background: #a5ea8e;
+}
+.status-1 {   /* busy */
+    background: #f78484;
+}
+.status-2 {   /* inuse */
+    background: #f78484;
+}
+.status-8 {  /* ringing */
+    background: #e2fb12;
+}
+.status-16 {  /* onhold */
+    background: #e2fb12;
+}
+.status-4 { /* unavailable */
+    background: #CCC;
+}
+.exten {
+    font-size: 140%;
+}
+html {
+  overflow-y: scroll;
+}
+    .grid-hint {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    .grid-item-hint {
+        flex-basis: 19%;
+        flex-grow: 1;
+        flex-shrink: 0;
+        font-size: 100%;
+        border: 1px solid black;
+        margin-top: 1px;
+        margin-right: 1px;
+    }
+    .grid-queue {
+        width:100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-content: stretch;
+        align-items: stretch;
+    }
+    .grid-item-queue {
+        flex-basis: 49%;
+        flex-grow: 0;
+        flex-shrink: 0;
+        border: 1px solid black;
+        margin-top: 1px;
+        margin-right: 1px;
+    }
+{{else}}
+    .grid-hint {
+        width:100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+    .grid-item-hint {
+        flex-grow: 0;
+        flex-shrink: 0;
+        flex-basis: 100px;
+        font-size: 100%;
+        border: 1px solid black;
+        margin-top: 1px;
+        margin-right: 1px;
+    }
+    .grid-queue {
+        width:100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: flex-start;
+        align-items: flex-start;
+    }
+    .grid-item-queue {
+        width: 33%;
+        flex-grow: 0;
+        flex-shrink: 0;
+        border: 1px solid black;
+        margin-top: 1px;
+        margin-right: 1px;
+    }
+{{end}}
+.hintLabel {
+    overflow: hidden;
+    white-space: nowrap;
+}
+.queuename {
+    background-color: #131556;
+    font-size: 120%;
+    text-align: center;
+    color: white;
+}
+.queuestatlabel {
+    text-align: center;
+}
+.queuestatvalue {
+    text-align: center;
+}
+.agentUnavail {
+    color: gray;
+}
+.agentBusy {
+    color: blue;
+}
+.agentIdle {
+    color: green;
+}
+.agentRing {
+    color: yellow;
+}
+.agentPaused {
+    color: red;
+}
+</style>
+{{end}}
+
+
+{{define "extraRightNav"}}
+<li><a href="/edit/{{.PanelID}}">Edit Layout</a></li>
+</li>
+{{end}}
+{{template "header" .}}
+{{if eq 0 .Layout.LayoutType}}
+    <div class="container-fluid">
+        <div class="grid-hint">
+            {{range .Exts}}
+            <div class="grid-item-hint status-{{.Status}} draggable" data-status={{.Status}} data-exten="{{.Exten}}">
+                <span class="exten">{{.Exten}}</span>
+                <p class="statusText">{{.StatusStr}}</p>
+                <p class="hintLabel">{{.Label}}</p>
+            </div>
+            {{end}}
+        </div>
+    </div>
+{{else if eq 1 .Layout.LayoutType}}
+    <div class="container-fluid">
+        <div class="grid-queue">
+            {{range .Queues}}
+            <div class="grid-item-queue" data-qn="{{.Name}}">
+                <div class="row">
+                    <div class="col-xs-12"><div class="queuename">{{.Name}}</div></div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-6">
+                        <div class="queuestatlabel">Calls</div>
+                        <div class="queuestatvalue">{{.QI.Calls}}</div>
+                        <div class="queuestatlabel">Completed</div>
+                        <div class="queuestatvalue">{{.QI.Completed}}</div>
+                        <div class="queuestatlabel">Abandoned</div>
+                        <div class="queuestatvalue">{{.QI.Abandoned}}</div>
+                        <div class="queuestatlabel">Svc Level</div>
+                        <div class="queuestatvalue">{{.QI.ServicelevelPerf}}%</div>
+                    </div>
+                    <div class="col-xs-6" style="border-left: gray solid 1px">
+                        {{range $loc, $val := .QI.Members}}
+                        <div data-id="{{$val.Location}}" class="agentEntry"><span class="agentIcon agentIdle">&#10042;</span>&nbsp;<span class="agentName">{{$val.Name}}</span></div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+{{else if eq 2 .Layout.LayoutType}}
+    <div class="container-fluid">
+        <div class="grid-queue">
+            {{range .Queues}}
+            <div class="grid-item-queue" data-qn="{{.Name}}">
+                <div class="row">
+                    <div class="col-xs-12"><div class="queuename">{{.Name}}</div></div>
+                </div>
+                <div class="row">
+                	<div class="col-xs-6">
+                        <div class="queuestatlabel">Calls</div>
+                        <div class="queuestatvalue">{{.QI.Calls}}</div>
+                        <div class="queuestatlabel">Completed</div>
+                        <div class="queuestatvalue">{{.QI.Completed}}</div>
+                        <div class="queuestatlabel">Abandoned</div>
+                        <div class="queuestatvalue">{{.QI.Abandoned}}</div>
+                        <div class="queuestatlabel">Svc Level</div>
+                        <div class="queuestatvalue">{{.QI.ServicelevelPerf}}%</div>
+                    </div>
+                    <div class="col-xs-6" style="border-left: gray solid 1px">
+                        {{range $loc, $val := .QI.Members}}
+                        <div data-id="{{$val.Location}}" class="agentEntry"><span class="agentIcon agentIdle">&#10042;</span>&nbsp;<span class="agentName">{{$val.Name}}</span></div>
+                        {{end}}
+                    </div>
+            	</div>
+            </div>
+            {{end}}
+        </div>
+        <div class="grid-hint">
+            {{range .Exts}}
+            <div class="grid-item-hint status-{{.Status}} draggable" data-status={{.Status}} data-exten="{{.Exten}}">
+                <span class="exten">{{.Exten}}</span>
+                <p class="statusText">{{.StatusStr}}</p>
+                <p class="hintLabel">{{.Label}}</p>
+            </div>
+            {{end}}
+        </div>
+    </div>
+{{else if eq 3 .Layout.LayoutType}}
+    <div class="container-fluid">
+        <div class="grid-hint">
+            {{range .Exts}}
+            <div class="grid-item-hint status-{{.Status}} draggable" data-status={{.Status}} data-exten="{{.Exten}}">
+                <span class="exten">{{.Exten}}</span>
+                <p class="statusText">{{.StatusStr}}</p>
+                <p class="hintLabel">{{.Label}}</p>
+            </div>
+            {{end}}
+        </div>
+        <div class="grid-queue">
+            {{range .Queues}}
+            <div class="grid-item-queue" data-qn="{{.Name}}">
+                <div class="row">
+                    <div class="col-xs-12"><div class="queuename">{{.Name}}</div></div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-6">
+                        <div class="queuestatlabel">Calls</div>
+                        <div class="queuestatvalue">{{.QI.Calls}}</div>
+                        <div class="queuestatlabel">Completed</div>
+                        <div class="queuestatvalue">{{.QI.Completed}}</div>
+                        <div class="queuestatlabel">Abandoned</div>
+                        <div class="queuestatvalue">{{.QI.Abandoned}}</div>
+                        <div class="queuestatlabel">Svc Level</div>
+                        <div class="queuestatvalue">{{.QI.ServicelevelPerf}}%</div>
+                    </div>
+                    <div class="col-xs-6" style="border-left: gray solid 1px">
+                        {{range $loc, $val := .QI.Members}}
+                        <div data-id="{{$val.Location}}" class="agentEntry"><span class="agentIcon agentIdle">&#10042;</span>&nbsp;<span class="agentName">{{$val.Name}}</span></div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+{{else if eq 4 .Layout.LayoutType}}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="grid-hint">
+                    {{range .Exts}}
+                    <div class="grid-item-hint status-{{.Status}} draggable" data-status={{.Status}} data-exten="{{.Exten}}">
+                        <span class="exten">{{.Exten}}</span>
+                        <p class="statusText">{{.StatusStr}}</p>
+                        <p class="hintLabel">{{.Label}}</p>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            <div class="col-xs-6">
+                <div class="grid-queue">
+                    {{range .Queues}}
+                    <div class="grid-item-queue" data-qn="{{.Name}}">
+                        <div class="row">
+                            <div class="col-xs-12"><div class="queuename">{{.Name}}</div></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <div class="queuestatlabel">Calls</div>
+                                <div class="queuestatvalue">{{.QI.Calls}}</div>
+                                <div class="queuestatlabel">Completed</div>
+                                <div class="queuestatvalue">{{.QI.Completed}}</div>
+                                <div class="queuestatlabel">Abandoned</div>
+                                <div class="queuestatvalue">{{.QI.Abandoned}}</div>
+                                <div class="queuestatlabel">Svc Level</div>
+                                <div class="queuestatvalue">{{.QI.ServicelevelPerf}}%</div>
+                            </div>
+                            <div class="col-xs-6" style="border-left: gray solid 1px">
+                                {{range $loc, $val := .QI.Members}}
+                                <div data-id="{{$val.Location}}" class="agentEntry"><span class="agentIcon agentIdle">&#10042;</span>&nbsp;<span class="agentName">{{$val.Name}}</span></div>
+                                {{end}}
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+{{else if eq 5 .Layout.LayoutType}}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="grid-queue">
+                    {{range .Queues}}
+                    <div class="grid-item-queue" data-qn="{{.Name}}">
+                        <div class="row">
+                            <div class="col-xs-12"><div class="queuename">{{.Name}}</div></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <div class="queuestatlabel">Calls</div>
+                                <div class="queuestatvalue">{{.QI.Calls}}</div>
+                                <div class="queuestatlabel">Completed</div>
+                                <div class="queuestatvalue">{{.QI.Completed}}</div>
+                                <div class="queuestatlabel">Abandoned</div>
+                                <div class="queuestatvalue">{{.QI.Abandoned}}</div>
+                                <div class="queuestatlabel">Svc Level</div>
+                                <div class="queuestatvalue">{{.QI.ServicelevelPerf}}%</div>
+                            </div>
+                            <div class="col-xs-6" style="border-left: gray solid 1px">
+                                {{range $loc, $val := .QI.Members}}
+                                <div data-id="{{$val.Location}}" class="agentEntry"><span class="agentIcon agentIdle">&#10042;</span>&nbsp;<span class="agentName">{{$val.Name}}</span></div>
+                                {{end}}
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            <div class="col-xs-6">
+                <div class="grid-hint">
+                    {{range .Exts}}
+                    <div class="grid-item-hint status-{{.Status}} draggable" data-status={{.Status}} data-exten="{{.Exten}}">
+                        <span class="exten">{{.Exten}}</span>
+                        <p class="statusText">{{.StatusStr}}</p>
+                        <p class="hintLabel">{{.Label}}</p>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+{{end}}
+<script>
+function updateAgentStatus(agentID, status, paused) {
+    var agentdiv = $('div[data-id="'+agentID+'"]');
+    var statusspan = $(agentdiv).find('span.agentIcon');
+    /*
+        0 - AST_DEVICE_UNKNOWN
+        1 - AST_DEVICE_NOT_INUSE
+        2 - AST_DEVICE_INUSE
+        3 - AST_DEVICE_BUSY
+        4 - AST_DEVICE_INVALID
+        5 - AST_DEVICE_UNAVAILABLE
+        6 - AST_DEVICE_RINGING
+        7 - AST_DEVICE_RINGINUSE
+        8 - AST_DEVICE_ONHOLD
+    */
+    var c = 'agentIcon agentUnavail';
+    var h = '&#127332;';
+    switch (status) {
+        case 1: c='agentIcon agentIdle'; h='&#127320;'; break;
+        case 2:
+        case 8:
+        case 3: c='agentIcon agentBusy'; h='&#127313;'; break;
+        case 6:
+        case 7: c='agentIcon agentRing'; h='&#127329;'; break;
+    }
+    if (paused) {
+        c = 'agentIcon agentPaused';
+        h = '&#127327;'
+    }
+    $(statusspan).attr('class', c).html(h);
+}
+
+$(document).ready(function(){
+    var wsconn;
+
+    function connectWS() {
+        wsconn = new WebSocket('ws://' + window.location.host + '/ws/pbx6');
+        wsconn.onopen = function(e) {
+            socketConnected = true;
+            $('.isoffline').hide();
+            $('.isonline').show();
+            wsconn.send(JSON.stringify({cmd:"WATCHORG", orgid:'ls'}));
+        }
+        wsconn.onclose = function(e) {
+            socketConnected = false;
+            $('.isonline').fadeOut(500, function() {
+                $('.isoffline').show();
+                acctDeselect();
+                setTimeout(connectWS, 5000);
+            });
+        }
+        wsconn.onmessage = function(e) {
+            var hcn = JSON.parse(e.data);
+            console.log(hcn);
+            switch (hcn.event) {
+                case 'HINTCHANGE':
+                    var x = $('.grid-item-hint[data-exten="'+hcn.exten+'"]');
+                    var oldStat = $(x).attr('data-status');
+                    $(x).find('.statusText').html(hcn.statusstr);
+                    $(x).removeClass('status-'+oldStat).addClass('status-'+hcn.status);
+                    $(x).attr('data-status', hcn.status);
+                    break;
+                case 'AGENTCHANGE':
+                    var agentdiv = $('div[data-id="'+hcn.Location+'"]');
+                    updateAgentStatus(hcn.Location, hcn.Status, hcn.Paused);
+            }
+        }
+    }
+
+    {{range .Queues}}
+        {{range $loc, $val := .QI.Members}}
+        updateAgentStatus('{{$loc}}', {{$val.Status}}, {{$val.Paused}});
+        {{end}}
+    {{end}}
+    connectWS();
+});
+</script>
+{{template "footer"}}

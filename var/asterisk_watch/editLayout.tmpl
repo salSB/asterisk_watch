@@ -1,0 +1,307 @@
+{{define "pageCSS"}}
+<style>
+.table-ultracondensed > thead > tr > th,
+.table-ultracondensed > tbody > tr > th,
+.table-ultracondensed > tfoot > tr > th,
+.table-ultracondensed > thead > tr > td,
+.table-ultracondensed > tbody > tr > td,
+.table-ultracondensed > tfoot > tr > td {
+    font-size:75%;
+    padding: 2px;
+}
+.compressed {
+    padding: 3px 8px;
+}
+.fixlist {
+    height: 75vh;
+    overflow-y: scroll;
+    background-color: #f7f7f7;
+}
+</style>
+<link href="/static/css/dragula.css" rel="stylesheet" type="text/css">
+<link href="/static/css/image-picker.css" rel="stylesheet" type="text/css">
+{{end}}
+{{define "extraNav"}}
+    <li><a href="/{{.PanelID}}">View Panel</a></li>
+    <li><img id="saving" src="/static/saving.gif" style="display:none;"></li>
+{{end}}
+{{template "header" .}}
+<div class="container-fluid">
+    <div class="panel" style="display:none;" id="errorMsg">
+    </div>
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#tab_a" data-toggle="tab">Layout</a></li>
+      <li><a href="#tab_b" data-toggle="tab">Extensions</a></li>
+      <li><a href="#tab_c" data-toggle="tab">Queues</a></li>
+      <li><a href="#tab_d" data-toggle="tab">Controls</a></li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane active" id="tab_a">
+            <div class="row">
+            <div class="col-xs-12">
+            <h4>Layout</h4>
+            <select class="image-picker" id="layoutSelect">
+              <option data-img-src="/static/layout0.png" value="0" {{if eq 0 .Layout.LayoutType}}selected{{end}}>Layout 1</option>
+              <option data-img-src="/static/layout1.png" value="1" {{if eq 1 .Layout.LayoutType}}selected{{end}}>Layout 2</option>
+              <option data-img-src="/static/layout2.png" value="2" {{if eq 2 .Layout.LayoutType}}selected{{end}}>Layout 3</option>
+              <option data-img-src="/static/layout3.png" value="3" {{if eq 3 .Layout.LayoutType}}selected{{end}}>Layout 4</option>
+              <option data-img-src="/static/layout4.png" value="4" {{if eq 4 .Layout.LayoutType}}selected{{end}}>Layout 5</option>
+              <option data-img-src="/static/layout5.png" value="5" {{if eq 5 .Layout.LayoutType}}selected{{end}}>Layout 6</option>
+            </select>
+            </div></div>
+        </div>
+        <div class="tab-pane" id="tab_b">
+            <div class="row">
+                <div class="col-xs-6">
+                    <h4>Available Extensions</h4>
+                    <ul class="list-group fixlist" id="availlist">
+                        {{range .AvailExts -}}
+                            <li class="list-group-item compressed extenitem" data-exten="{{.Exten}}">
+                                <div class="row">
+                                    <div class="col-xs-9">{{- .Exten}} -- {{.Label -}}</div>
+                                    <div class="col-xs-3 itemShowOptions" style="display:none; font-size: 70%;">Show Caller ID <input class="showCID" type="checkbox" value="1"></div>
+                                </div>
+                            </li>
+                        {{- end}}
+                    </ul>
+                </div>
+                <div class="col-xs-6">
+                    <h4>Displayed Extensions</h4>
+                    <ul class="list-group fixlist" id="usedlist">
+                        {{range .UsedExts -}}
+                            <li class="list-group-item compressed extenitem" data-exten="{{.Exten}}">
+                                <div class="row">
+                                    <div class="col-xs-9">{{- .Exten}} -- {{.Label -}}</div>
+                                    <div class="col-xs-3 itemShowOptions" style="font-size: 70%;">Show Caller ID <input class="showCID" type="checkbox" value="1" {{if eq .ShowCID 1}}checked{{end}} ></div>
+                                </div>
+                            </li>
+                        {{- end}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane" id="tab_c">
+            <div class="row">
+                <div class="col-xs-6">
+                    <h4>Available Queues</h4>
+                    <ul class="list-group fixlist" id="qavaillist">
+                        {{range .AvailQueues}}
+                            <li class="list-group-item compressed queueitem" data-qn="{{.Name}}">
+                                <div class="row">
+                                    <div class="col-xs-6">{{.Name}}</div>
+                                    <div class="col-xs-3 itemShowOptions" style="display:none; font-size:70%;">Show Agents <input class="showAgents" type="checkbox" value="1"></div>
+                                    <div class="col-xs-3 itemShowOptions" style="display:none; font-size:70%;">Show Calls <input class="showCalls" type="checkbox" value="1"></div>
+                                </div>
+                            </li>
+                        {{end}}
+                    </ul>
+                </div>
+                <div class="col-xs-6">
+                    <h4>Displayed Queues</h4>
+                    <ul class="list-group fixlist" id="qusedlist">
+                        {{range .UsedQueues}}
+                            <li class="list-group-item compressed queueitem" data-qn="{{.Name}}">
+                                <div class="row">
+                                    <div class="col-xs-6">{{.Name}}</div>
+                                    <div class="col-xs-3 itemShowOptions" style="font-size: 70%;">Show Agents <input class="showAgents" type="checkbox" value="1" {{if eq .ShowAgents 1}}checked{{end}} ></div>
+                                    <div class="col-xs-3 itemShowOptions" style="font-size: 70%;">Show Calls <input class="showCalls" type="checkbox" value="1" {{if eq .ShowCalls 1}}checked{{end}} ></div>
+                                </div>
+                            </li>
+                        {{end}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane" id="tab_d">
+            <div class="row">
+                <div class="col-xs-6">
+                    <h4>Available Controls</h4>
+                    <ul class="list-group fixlist" id="varavaillist">
+                        {{range .AvailVars}}<li class="list-group-item compressed extenitem" data-var="{{.Name}}">{{.Label}}</li>{{end}}
+                    </ul>
+                </div>
+                <div class="col-xs-6">
+                    <h4>Displayed Controls</h4>
+                    <ul class="list-group fixlist" id="varusedlist">
+                        {{range .UsedVars}}<li class="list-group-item compressed extenitem" data-var="{{.Name}}">{{.Label}}</li>{{end}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div><!-- tab content -->
+</div>
+<script src='/static/js/dragula.min.js'></script>
+<script src='/static/js/image-picker.min.js'></script>
+<script>
+var saveTimerID = false;
+var layoutID = '{{.PanelID}}';
+
+window.onbeforeunload = function() {
+    if (saveTimerID !== false) {
+        clearTimeout(saveTimerID);
+        doSaveLayout();
+    }
+}
+
+function buildExtList(itemGroup, attr) {
+    var i, a=[];
+    for (i=0; i < itemGroup.length; i++)
+        a[i]={'exten':itemGroup[i].getAttribute('data-exten'),
+              'showcid':$(itemGroup[i]).find('.showCID').is(':checked') ? 1 : 0,
+             };
+    return a
+}
+
+function buildVarList(itemGroup, attr) {
+    var i, a=[];
+    for (i=0; i < itemGroup.length; i++)
+        a[i]=itemGroup[i].getAttribute('data-var');
+    return a
+}
+
+function buildQList(itemGroup) {
+    var i, a=[];
+    for (i=0; i < itemGroup.length; i++)
+        a[i]={'qn':itemGroup[i].getAttribute('data-qn'), 
+              'showagents':$(itemGroup[i]).find('.showAgents').is(':checked') ? 1 : 0,
+              'showcalls':$(itemGroup[i]).find('.showCalls').is(':checked') ? 1 : 0
+             };
+    return a
+}
+
+function doSaveLayout() {
+    var layout={
+        'layout': parseInt($('#layoutSelect :selected').val(), 10),
+        'extens2': buildExtList($('#usedlist').find('.list-group-item')),
+        'queues': buildQList($('#qusedlist').find('.list-group-item')),
+        'vars': buildVarList($('#varusedlist').find('.list-group-item')),
+    };
+    saveTimerID = false;
+    // console.log("SAVE:",JSON.stringify(layout));
+    $('#saving').show();
+    $.ajax({
+        url: '/layout/1/'+layoutID,
+        type: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(layout)
+    }).done(function(data, textStatus, jqXHR) {
+        $('#saving').hide();
+        $('#errorMsg').hide();
+        // console.log("Saved: ", textStatus);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        $('#errorMsg').html("Unable to save changes").show();
+        $('#saving').hide();
+        console.log("Fail:", errorThrown, textStatus);
+    });
+}
+
+function saveLayout() {
+    if (saveTimerID !== false) {
+        clearTimeout(saveTimerID);
+    }
+    saveTimerID = setTimeout(doSaveLayout, 3000);
+}
+
+function showCheckChanged(e) {
+    var exten = $(e.target).closest('li').attr('data-qn');
+    var checked = $(e.target).is(':checked');
+    // console.log("ShowAgents for ", exten, " checked=",checked);
+    saveLayout();
+}
+
+function moveQueue(e) {
+    if (e.currentTarget.parentElement.id == 'qavaillist') {
+        $(e.currentTarget).detach().appendTo('#qusedlist');
+        $(e.currentTarget).find('div.itemShowOptions').each(function(i, e) { $(this).show(); });
+    } else {
+        $(e.currentTarget).find('div.itemShowOptions').each(function(i, e) { $(this).hide(); });
+        $(e.currentTarget).detach().appendTo('#qavaillist');
+    }
+    saveLayout();
+}
+
+function moveExten(e) {
+    if (e.currentTarget.parentElement.id == 'availlist') {
+        $(e.currentTarget).detach().appendTo('#usedlist');
+        $(e.currentTarget).find('div.itemShowOptions').each(function(i, e) { $(this).show(); });
+    } else {
+        $(e.currentTarget).find('div.itemShowOptions').each(function(i, e) { $(this).hide(); });
+        $(e.currentTarget).detach().appendTo('#availlist');
+    }
+    saveLayout();
+}
+
+function moveVar(e) {
+    if (e.currentTarget.parentElement.id == 'varavaillist') {
+        $(e.currentTarget).detach().appendTo('#varusedlist');
+    } else {
+        $(e.currentTarget).detach().appendTo('#varavaillist');
+    }
+    saveLayout();
+}
+
+$(document).ready(function(){
+    $('#layoutSelect').imagepicker().on('change', function(e) {
+        saveLayout();
+    });
+    $('#qavaillist').on('dblclick', '.queueitem', moveQueue);
+    $('#qusedlist').on('change', '.showAgents', showCheckChanged).on('dblclick', '.queueitem', moveQueue);
+    $('#qusedlist').on('change', '.showCalls', showCheckChanged);
+    $('#availlist').on('dblclick', '.extenitem', moveExten);
+    $('#usedlist').on('change', '.showCID', showCheckChanged).on('dblclick', '.extenitem', moveExten);
+    $('#varavaillist').on('dblclick', '.extenitem', moveVar);
+    $('#varusedlist').on('dblclick', '.extenitem', moveVar);
+    var dragExtens = dragula(
+        [document.querySelector('#availlist'), document.querySelector('#usedlist')],
+        {
+/*
+            copy: function (el, source) {
+                return source === document.querySelector('#availlist');
+            },
+            accepts: function (el, target) {
+                return target !== document.querySelector('#availlist');
+            },
+*/
+            removeOnSpill: false,
+        });
+    dragExtens.on('drop', function (el, target, source, sibling) {
+        if ($(target).attr('id') == 'availlist') {
+            // hide the checkboxes
+            $(el).find('div.itemShowOptions').each(function(i, e) { $(this).hide(); });
+        } else {
+            // Show the checkboxes
+            $(el).find('div.itemShowOptions').each(function(i, e) { $(this).show(); });
+        }
+        saveLayout();
+    });
+    var dragQueues = dragula(
+        [document.querySelector('#qavaillist'), document.querySelector('#qusedlist')],
+        {
+            removeOnSpill: false,
+        });
+/*
+    dragQueues.on('remove', function (el, target, source, sibling) {
+        saveLayout();
+    });
+*/
+    dragQueues.on('drop', function (el, target, source, sibling) {
+        if ($(target).attr('id') == 'qavaillist') {
+            // hide the checkboxes
+            $(el).find('div.itemShowOptions').each(function(i, e) { $(this).hide(); });
+        } else {
+            // Show the checkboxes
+            $(el).find('div.itemShowOptions').each(function(i, e) { $(this).show(); });
+        }
+        saveLayout();
+    });
+    var dragVars = dragula(
+        [document.querySelector('#varavaillist'), document.querySelector('#varusedlist')],
+        {
+            removeOnSpill: false,
+        });
+    dragVars.on('drop', function (el, target, source, sibling) {
+        saveLayout();
+    });
+});
+</script>
+{{template "footer"}}
