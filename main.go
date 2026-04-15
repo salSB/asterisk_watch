@@ -398,7 +398,7 @@ func main() {
 		http.FileServer(http.Dir(filepath.Join(Config.Web.TemplatePath, "/.well-known/acme-challenge/")))))
 	log.Println("Starting ACME HTTP server")
 	go func() {
-		logger.Fatal(http.ListenAndServe("0.0.0.0:99", rAcme))
+		logger.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", Config.Web.AcmePort), rAcme))
 	}()
 	// Favicon.ico Handler
 	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {

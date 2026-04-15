@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"os"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Configuration struct {
@@ -39,6 +40,7 @@ type Configuration struct {
 		SSLBindAddr       string `yaml:"sslbindaddr"`
 		SSLCertFile       string `yaml:"sslcertfile"`
 		SSLPrivateKeyFile string `yaml:"sslprivatekeyfile"`
+		AcmePort          int    `yaml:"acmeport"`
 	} `yaml:"web"`
 }
 
@@ -70,6 +72,10 @@ func (c *Configuration) Load(filename string) error {
 		c.AMI.Host = "127.0.0.1"
 	}
 	c.AMI.ConnectString = fmt.Sprintf("%s:%d", c.AMI.Host, c.AMI.Port)
+
+	if c.Web.AcmePort == 0 {
+		c.Web.AcmePort = 80
+	}
 
 	if len(c.Redis.Host) > 5 {
 		if strings.IndexRune(c.Redis.Host, ':') == -1 {
